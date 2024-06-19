@@ -116,3 +116,50 @@ exports.setVideoPrivacy = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+exports.likeVideo = async (req, res) => {
+  const { videoId } = req.params;
+
+  try {
+    const videos = await readVideoData();
+    const videoIndex = videos.findIndex(v => v.id === parseInt(videoId));
+
+    if (videoIndex === -1) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    // Check if user is authenticated
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized. Please log in to like this video.' });
+    }
+
+    // Increment likes count
+    videos[videoIndex].likes += 1;
+
+    await writeVideoData(videos);
+
+    res.status(200).json(videos[videoIndex]);
+  } catch (error) {
+    console.error('Error liking video:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// exports.likeVideo = async (req, res) => {
+//   const { videoId } = req.params;
+
+//   try {
+//     const videos = await readVideoData();
+//     const video = videos.find(v => v.id === parseInt(videoId));
+
+//     if (!video) {
+//       return res.status(404).json({ message: 'Video not found' });
+//     }
+
+//     video.likes += 1;
+//     await writeVideoData(videos);
+//     res.status(200).json(video);
+//   } catch (error) {
+//     console.error('Error liking video:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
