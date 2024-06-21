@@ -8,8 +8,7 @@ router.get('/', videoController.getAllVideos);
 router.get('/public', videoController.getAllPublicVideos);
 router.post('/upload', authMiddleware, upload.single('video'), videoController.uploadVideo);
 router.post('/set-privacy/:videoId', authMiddleware, videoController.setVideoPrivacy);
-// router.post('/like/:videoId', authMiddleware, videoController.likeVideo);
-router.post('/like/:videoId', videoController.likeVideo);
+router.post('/like/:videoId', authMiddleware, videoController.likeVideo);
 
 module.exports = router;
 

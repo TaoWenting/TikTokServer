@@ -1,14 +1,21 @@
+// middlewares/authMiddleware.js
 const jwt = require('jsonwebtoken');
+const secretKey = 'TIfS3mO0WYFEwiLPv5oR3DSGXx/cs12DCCluKQbEcTE=';  // Replace with your actual secret key
 
 module.exports = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers.authorization;
 
-  if (token == null) return res.status(401).json({ message: 'No token provided' });
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Authorization header missing' });
+  }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Token is not valid' });
-    req.user = user;
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    req.user = decoded; // Attach user information to the request
     next();
-  });
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid or expired token' });
+  }
 };
