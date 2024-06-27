@@ -10,6 +10,12 @@ router.post('/upload', authMiddleware, upload.single('video'), videoController.u
 router.post('/set-privacy/:videoId', authMiddleware, videoController.setVideoPrivacy);
 router.post('/like/:videoId', authMiddleware, videoController.likeVideo);
 router.post('/unlike/:videoId',authMiddleware, videoController.unlikeVideo); 
+router.post('/:videoId/comments', authMiddleware, videoController.addComment);
+router.post('/:videoId/comments/:commentId/replies', authMiddleware, videoController.addReply);
+router.get('/:videoId/comments', videoController.getComments);
+
+// router.put('/:id', videoController.updateVideoById);
+// router.delete('/:id', videoController.deleteVideoById);
 
 module.exports = router;
 

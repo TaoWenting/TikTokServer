@@ -1,5 +1,6 @@
 const { readVideoData, writeVideoData, readUserData } = require('../utils/videoDataUtils');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 exports.getUserVideos = async (req, res) => {
   const { userId } = req.params;
@@ -167,4 +168,98 @@ exports.unlikeVideo = async (req, res) => {
     console.error('Error unliking video:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+exports.addComment = async (req, res) => {
+  const { videoId } = req.params;
+  const { text } = req.body;
+
+  try {
+    const videos = await readVideoData();
+    const videoIndex = videos.findIndex(v => v.id === parseInt(videoId));
+
+    if (videoIndex === -1) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    const newComment = {
+      id: uuidv4(),
+      text,
+      userId: req.user.userId, // Assuming user ID is obtained from auth middleware
+      replies: []
+    };
+
+    videos[videoIndex].comments.push(newComment);
+    await writeVideoData(videos);
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.addReply = async (req, res) => {
+  const { videoId, commentId } = req.params;
+  const { text } = req.body;
+
+  try {
+    const videos = await readVideoData();
+    const videoIndex = videos.findIndex(v => v.id === parseInt(videoId));
+
+    if (videoIndex === -1) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    const comment = findComment(videos[videoIndex].comments, commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    const newReply = {
+      id: uuidv4(),
+      text,
+      userId: req.user.userId, // Assuming user ID is obtained from auth middleware
+      replies: []
+    };
+
+    comment.replies.push(newReply);
+    await writeVideoData(videos);
+
+    res.status(201).json(newReply);
+  } catch (error) {
+    console.error('Error adding reply:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getComments = async (req, res) => {
+  const { videoId } = req.params;
+
+  try {
+    const videos = await readVideoData();
+    const video = videos.find(v => v.id === parseInt(videoId));
+
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    res.status(200).json(video.comments);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const findComment = (comments, commentId) => {
+  for (const comment of comments) {
+    if (comment.id === commentId) {
+      return comment;
+    }
+    const foundInReplies = findComment(comment.replies, commentId);
+    if (foundInReplies) {
+      return foundInReplies;
+    }
+  }
+  return null;
 };
