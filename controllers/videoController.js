@@ -1,6 +1,7 @@
 const { readVideoData, writeVideoData, readUserData } = require('../utils/videoDataUtils');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
 
 exports.getUserVideos = async (req, res) => {
   const { userId } = req.params;
@@ -262,4 +263,42 @@ const findComment = (comments, commentId) => {
     }
   }
   return null;
+};
+
+exports.deleteVideoById = async (req, res) => {
+  const { videoId } = req.params;
+  const { user } = req;
+
+  try {
+    const videos = await readVideoData();
+    const videoIndex = videos.findIndex(v => v.id === parseInt(videoId));
+
+    if (videoIndex === -1) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    const video = videos[videoIndex];
+
+    if (video.userId !== user.userId) {
+      return res.status(403).json({ message: 'You do not have permission to delete this video' });
+    }
+
+    // Delete the video file from the server
+    const videoPath = path.join(__dirname, '../videosSave', path.basename(video.url));
+    fs.unlink(videoPath, (err) => {
+      if (err) {
+        console.error('Error deleting video file:', err);
+      }
+    });
+
+    // Remove the video from the array
+    videos.splice(videoIndex, 1);
+
+    await writeVideoData(videos);
+
+    res.status(200).json({ message: 'Video deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
