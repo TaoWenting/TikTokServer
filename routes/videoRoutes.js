@@ -3,7 +3,6 @@ const router = express.Router();
 const videoController = require('../controllers/videoController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
-const deleteMiddleware = require('../middlewares/deleteMiddleware');
 
 router.get('/', videoController.getAllVideos);
 router.get('/public', videoController.getAllPublicVideos);
@@ -15,9 +14,6 @@ router.post('/:videoId/comments', authMiddleware, videoController.addComment);
 router.post('/:videoId/comments/:commentId/replies', authMiddleware, videoController.addReply);
 router.get('/:videoId/comments', videoController.getComments);
 router.delete('/:videoId', authMiddleware, videoController.deleteVideoById); // Add this line
-
-// router.put('/:id', videoController.updateVideoById);
-// router.delete('/:id', videoController.deleteVideoById);
 
 module.exports = router;
 
